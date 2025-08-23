@@ -16,8 +16,9 @@ fn get_register_y(opcode: u16) -> u8 {
 pub fn op0000(c8: &mut super::Chip8) {
     match c8.current_opcode & 0x00FF {
         0xEE => {
-            let val = c8.stack.pop();
-            c8.program_counter = val.expect("returning from subroutine but empty stack");
+            c8.sp -= 1;
+            let val = c8.stack[c8.sp as usize];
+            c8.program_counter = val;
         }
         0xE0 => {
             c8.screen = [0; SCREEN_WIDTH * SCREEN_HEIGHT];
@@ -33,7 +34,8 @@ pub fn op1000(c8: &mut super::Chip8) {
 
 // 2NNN: Call subroutine at NNN
 pub fn op2000(c8: &mut super::Chip8) {
-    c8.stack.push(c8.program_counter);
+    c8.stack[c8.sp as usize] = c8.program_counter;
+    c8.sp += 1;
     c8.program_counter = c8.current_opcode & 0x0FFF;
 }
 

@@ -1,7 +1,4 @@
 mod opcodes;
-mod stack;
-
-use stack::Stack;
 
 use std::fs;
 
@@ -38,7 +35,9 @@ pub struct Chip8 {
     memory: [u8; 4096],
     registers: [u8; 16],
     index_register: u16,
-    stack: Stack<u16>,
+
+    stack: [u16; 64],
+    sp: u8,
 
     current_opcode: u16,
     program_counter: u16,
@@ -62,7 +61,9 @@ impl Chip8 {
             memory: mem,
             registers: [0; 16],
             index_register: 0,
-            stack: Stack::new(),
+
+            stack: [0; 64],
+            sp: 0,
 
             current_opcode: 0,
             program_counter: PROGRAM_START_LOC,
@@ -86,8 +87,6 @@ impl Chip8 {
     pub fn step(&mut self) {
         self.current_opcode = (self.memory[self.program_counter as usize] as u16) << 8
             | self.memory[(self.program_counter as usize) + 1] as u16;
-
-        //println!("opcode: {:x}", self.current_opcode);
 
         match self.current_opcode & 0xF000 {
             0x0000 => opcodes::op0000(self),
