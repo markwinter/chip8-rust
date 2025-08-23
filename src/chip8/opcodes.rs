@@ -84,54 +84,56 @@ pub fn op7000(c8: &mut super::Chip8) {
 // 8XY1: Set VX = VX|VY
 // 8XY2: Set VX = VX&VY
 // 8XY3: Set VX = VX^VY
-// 8XY4: Set VX += VY
-// 8XY5: Set VX -= VY
+// 8XY4: Set VX += VY. Set VF carry
+// 8XY5: Set VX -= VY. Set VF NOT borrow
 // 8XY6: Store least significant bit of VX in VF and shift VX right 1
-// 8XY7: Set VX = VY - VX. Set VF=0 when there's a borrow, else 1
+// 8XY7: Set VX = VY - VX. Set VF NOT borrow
 // 8XYE: Store most significant bit of VX in VF then shift VX left 1
 pub fn op8000(c8: &mut super::Chip8) {
-    let register_x = get_register_x(c8.current_opcode);
-    let register_y = get_register_y(c8.current_opcode);
+    let register_x = get_register_x(c8.current_opcode) as usize;
+    let register_y = get_register_y(c8.current_opcode) as usize;
 
     match c8.current_opcode & 0x000F {
-        0x0 => c8.registers[register_x as usize] = c8.registers[register_y as usize],
-        0x1 => c8.registers[register_x as usize] |= c8.registers[register_y as usize],
-        0x2 => c8.registers[register_x as usize] &= c8.registers[register_y as usize],
-        0x3 => c8.registers[register_x as usize] ^= c8.registers[register_y as usize],
+        0x0 => c8.registers[register_x] = c8.registers[register_y],
+        0x1 => c8.registers[register_x] |= c8.registers[register_y],
+        0x2 => c8.registers[register_x] &= c8.registers[register_y],
+        0x3 => c8.registers[register_x] ^= c8.registers[register_y],
         0x4 => {
-            let x = register_x as usize;
-            let y = register_y as usize;
-            let sum = c8.registers[x] as u16 + c8.registers[y] as u16;
-            c8.registers[REGISTER_VF as usize] = if sum > 0xFF { 1 } else { 0 };
-            c8.registers[x] = c8.registers[x].wrapping_add(c8.registers[y]);
+            let (v, carry) = c8.registers[register_x].overflowing_add(c8.registers[register_y]);
+            c8.registers[register_x] = v;
+            if carry {
+                c8.registers[REGISTER_VF as usize] = 1;
+            } else {
+                c8.registers[REGISTER_VF as usize] = 0;
+            }
         }
         0x5 => {
-            let x = register_x as usize;
-            let y = register_y as usize;
-            c8.registers[REGISTER_VF as usize] = if c8.registers[x] >= c8.registers[y] {
-                1
+            let (v, carry) = c8.registers[register_x].overflowing_sub(c8.registers[register_y]);
+            c8.registers[register_x] = v;
+            if carry {
+                c8.registers[REGISTER_VF as usize] = 0;
             } else {
-                0
-            };
-            c8.registers[x] = c8.registers[x].wrapping_sub(c8.registers[y]);
+                c8.registers[REGISTER_VF as usize] = 1;
+            }
         }
         0x6 => {
-            c8.registers[REGISTER_VF as usize] = c8.registers[register_x as usize] & 0x01;
-            c8.registers[register_x as usize] >>= 1;
+            let lsb = c8.registers[register_x] & 0x1;
+            c8.registers[register_x] >>= 1;
+            c8.registers[REGISTER_VF as usize] = lsb;
         }
         0x7 => {
-            let x = register_x as usize;
-            let y = register_y as usize;
-            c8.registers[REGISTER_VF as usize] = if c8.registers[y] >= c8.registers[x] {
-                1
+            let (v, carry) = c8.registers[register_y].overflowing_sub(c8.registers[register_x]);
+            c8.registers[register_x] = v;
+            if carry {
+                c8.registers[REGISTER_VF as usize] = 0;
             } else {
-                0
-            };
-            c8.registers[x] = c8.registers[y].wrapping_sub(c8.registers[x]);
+                c8.registers[REGISTER_VF as usize] = 1;
+            }
         }
         0xE => {
-            c8.registers[REGISTER_VF as usize] = (c8.registers[register_x as usize] & 0x80) >> 7;
-            c8.registers[register_x as usize] <<= 1;
+            let msb = (c8.registers[register_x] & 0x80) >> 7;
+            c8.registers[register_x] <<= 1;
+            c8.registers[REGISTER_VF as usize] = msb;
         }
         _ => (),
     }
