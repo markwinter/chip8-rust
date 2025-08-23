@@ -1,5 +1,7 @@
 mod chip8;
 
+use clap::Parser;
+
 use crate::chip8::{SCREEN_HEIGHT, SCREEN_WIDTH};
 
 use sdl2::event::Event;
@@ -12,10 +14,17 @@ use sdl2::video::Window;
 const SCALE: u32 = 15;
 const TICKS_PER_FRAME: usize = 12;
 
+#[derive(Parser)]
+struct Args {
+    rom_path: String,
+}
+
 fn main() {
+    let args = Args::parse();
+
     let mut c8 = chip8::Chip8::new();
 
-    if let Err(e) = c8.load_rom("4-flags.ch8") {
+    if let Err(e) = c8.load_rom(&args.rom_path) {
         panic!("error reading rom: {e}");
     }
 

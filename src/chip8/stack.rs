@@ -14,10 +14,6 @@ impl<T> Stack<T> {
         self.elements.push(item);
     }
 
-    pub fn top(&self) -> Option<&T> {
-        self.elements.last()
-    }
-
     pub fn pop(&mut self) -> Option<T> {
         self.elements.pop()
     }
