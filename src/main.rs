@@ -24,9 +24,7 @@ fn main() {
 
     let mut c8 = chip8::Chip8::new();
 
-    if let Err(e) = c8.load_rom(&args.rom_path) {
-        panic!("error reading rom: {e}");
-    }
+    c8.load_rom(&args.rom_path).unwrap();
 
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
