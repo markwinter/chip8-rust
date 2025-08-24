@@ -76,7 +76,7 @@ impl Chip8 {
         }
     }
 
-    pub fn load_rom(&mut self, filepath: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn load_rom(&mut self, filepath: &str) -> Result<(), std::io::Error> {
         let data = fs::read(filepath)?;
         let start = PROGRAM_START_LOC as usize;
         let end = start + data.len();
